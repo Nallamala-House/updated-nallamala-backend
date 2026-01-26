@@ -3,14 +3,14 @@ version: "3.9"
 services:
   postgres:
     image: postgres:16
-    container_name: auth_postgres
+    container_name: nallamala-postgres
     restart: always
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: app_db
     ports:
       - "5432:5432"
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin123
+      POSTGRES_DB: nallamala
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
