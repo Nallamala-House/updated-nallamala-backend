@@ -6,6 +6,15 @@ export const dynamic = 'force-dynamic';
 
 export async function POST(req: Request) {
     try {
+        // Verify the internal secret for trusted communication
+        const secret = req.headers.get('x-internal-secret');
+        const expectedSecret = process.env.INTERNAL_API_SECRET;
+
+        if (expectedSecret && secret !== expectedSecret) {
+            console.warn('[User Sync] Invalid or missing internal secret');
+            // Still allow the request but log it - don't block user creation
+        }
+
         const { name, email, image } = await req.json();
 
         if (!email) {
@@ -29,6 +38,7 @@ export async function POST(req: Request) {
                 image: image || "",
                 role: isAdmin ? 'admin' : 'user',
             });
+            console.log(`[User Sync] Created new user: ${email} (role: ${user.role})`);
         } else {
             // Optionally update their name/image if they change it on Google
             let needsUpdate = false;
@@ -43,12 +53,15 @@ export async function POST(req: Request) {
 
             if (needsUpdate) {
                 await user.save();
+                console.log(`[User Sync] Updated existing user: ${email}`);
+            } else {
+                console.log(`[User Sync] User already exists, no changes: ${email}`);
             }
         }
 
         return NextResponse.json({ success: true, data: user });
     } catch (error: any) {
-        console.error("User sync error:", error);
+        console.error("[User Sync] Error:", error);
         return NextResponse.json({ success: false, message: error.message }, { status: 500 });
     }
 }
