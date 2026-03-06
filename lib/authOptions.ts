@@ -18,7 +18,7 @@ export const authOptions: AuthOptions = {
 
                     const email = user?.email || "";
                     const existingUser = await User.findOne({ email: email });
-                    const adminEmails = ["nallamala-webad@ds.study.iitm.ac.in", "nallamala-webad@ds.study.ac.in"];
+                    const adminEmails = ["nallamala-webad@ds.study.iitm.ac.in", "nallamala-sec@ds.study.iitm.ac.in"];
                     const isAdmin = adminEmails.includes(email);
 
                     if (!existingUser && user) {

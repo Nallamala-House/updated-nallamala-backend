@@ -14,7 +14,16 @@ import {
     Pencil
 } from "lucide-react";
 
-const fetcher = (url: string) => fetch(url).then((res) => res.json());
+const fetcher = async (url: string) => {
+    const res = await fetch(url);
+    const contentType = res.headers.get("content-type");
+    if (!contentType || !contentType.includes("application/json")) {
+        const text = await res.text();
+        console.error("Non-JSON response from server:", text);
+        throw new Error("Server returned non-JSON response. Please check if the backend is running.");
+    }
+    return res.json();
+};
 
 export default function UpdatesAdmin() {
     const { data, error, mutate } = useSWR("/api/updates", fetcher);
@@ -126,6 +135,13 @@ export default function UpdatesAdmin() {
                 body: formData,
             });
 
+            const contentType = res.headers.get("content-type");
+            if (!contentType || !contentType.includes("application/json")) {
+                const text = await res.text();
+                console.error("Non-JSON response during submit:", text);
+                throw new Error("Failed to save: Server returned an invalid response.");
+            }
+
             const result = await res.json();
             if (!result.success) throw new Error(result.message);
 
@@ -157,6 +173,12 @@ export default function UpdatesAdmin() {
             const res = await fetch(`/api/updates/${id}`, {
                 method: "DELETE",
             });
+
+            const contentType = res.headers.get("content-type");
+            if (!contentType || !contentType.includes("application/json")) {
+                throw new Error("Failed to delete: Server returned an invalid response.");
+            }
+
             const result = await res.json();
             if (!result.success) throw new Error(result.message);
             mutate();

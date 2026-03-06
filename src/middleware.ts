@@ -6,7 +6,7 @@ export function middleware(request: NextRequest) {
     const origin = request.headers.get('origin') || '';
 
     // Normalize frontend URL and allow common local origins
-    const frontendUrl = process.env.FRONTEND_URL?.replace(/\/$/, '') || 'https://nallamala.iitmbs.org';
+    const frontendUrl = process.env.FRONTEND_URL?.replace(/\/$/, '');
     const allowedOrigins = [frontendUrl, 'http://localhost:3000', 'http://localhost:3001', 'http://127.0.0.1:3000', 'http://127.0.0.1:3001'];
 
     // Check if the request origin is allowed
