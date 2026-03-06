@@ -21,6 +21,13 @@ export default function UpdatesAdmin() {
     const [title, setTitle] = useState("");
     const [description, setDescription] = useState("");
     const [file, setFile] = useState<File | null>(null);
+    const [badgeText, setBadgeText] = useState("Update");
+    const [statusText, setStatusText] = useState("");
+    const [secondaryTitle, setSecondaryTitle] = useState("");
+    const [buttonText, setButtonText] = useState("");
+    const [buttonLink, setButtonLink] = useState("");
+    const [links, setLinks] = useState<{ text: string; url: string }[]>([]);
+    const [additionalImages, setAdditionalImages] = useState<{ file?: File; description: string; fileId?: string; tempId: string }[]>([]);
     const [loading, setLoading] = useState(false);
     const [showForm, setShowForm] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
@@ -30,6 +37,13 @@ export default function UpdatesAdmin() {
         setTitle("");
         setDescription("");
         setFile(null);
+        setBadgeText("Update");
+        setStatusText("");
+        setSecondaryTitle("");
+        setButtonText("");
+        setButtonLink("");
+        setLinks([]);
+        setAdditionalImages([]);
         setShowForm(!showForm);
     };
 
@@ -38,8 +52,40 @@ export default function UpdatesAdmin() {
         setTitle(update.title);
         setDescription(update.description);
         setFile(null);
+        setBadgeText(update.badgeText || "Update");
+        setStatusText(update.statusText || "");
+        setSecondaryTitle(update.secondaryTitle || "");
+        setButtonText(update.buttonText || "");
+        setButtonLink(update.buttonLink || "");
+        setLinks(update.links || []);
+        setAdditionalImages(update.additionalImages?.map((img: any) => ({
+            fileId: img.fileId?._id || img.fileId,
+            description: img.description,
+            tempId: Math.random().toString(36).substr(2, 9)
+        })) || []);
         setShowForm(true);
         window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    const addLink = () => setLinks([...links, { text: "", url: "" }]);
+    const removeLink = (index: number) => setLinks(links.filter((_, i) => i !== index));
+    const updateLink = (index: number, field: "text" | "url", value: string) => {
+        const newLinks = [...links];
+        newLinks[index][field] = value;
+        setLinks(newLinks);
+    };
+
+    const addImage = () => setAdditionalImages([...additionalImages, { description: "", tempId: Math.random().toString(36).substr(2, 9) }]);
+    const removeImage = (index: number) => setAdditionalImages(additionalImages.filter((_, i) => i !== index));
+    const updateImageDescription = (index: number, description: string) => {
+        const newImages = [...additionalImages];
+        newImages[index].description = description;
+        setAdditionalImages(newImages);
+    };
+    const updateImageFile = (index: number, file: File) => {
+        const newImages = [...additionalImages];
+        newImages[index].file = file;
+        setAdditionalImages(newImages);
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -53,6 +99,27 @@ export default function UpdatesAdmin() {
             if (file) {
                 formData.append("file", file);
             }
+            formData.append("badgeText", badgeText);
+            formData.append("statusText", statusText);
+            formData.append("secondaryTitle", secondaryTitle);
+            formData.append("buttonText", buttonText);
+            formData.append("buttonLink", buttonLink);
+            formData.append("links", JSON.stringify(links));
+
+            // Metadata for additional images
+            const additionalImagesMetadata = additionalImages.map(img => ({
+                description: img.description,
+                fileId: img.fileId,
+                tempId: img.tempId
+            }));
+            formData.append("additionalImages", JSON.stringify(additionalImagesMetadata));
+
+            // Append actual files for new additional images
+            additionalImages.forEach(img => {
+                if (img.file) {
+                    formData.append(`additionalFile_${img.tempId}`, img.file);
+                }
+            });
 
             const res = await fetch(editingId ? `/api/updates/${editingId}` : "/api/updates", {
                 method: editingId ? "PUT" : "POST",
@@ -66,6 +133,13 @@ export default function UpdatesAdmin() {
             setTitle("");
             setDescription("");
             setFile(null);
+            setBadgeText("Update");
+            setStatusText("");
+            setSecondaryTitle("");
+            setButtonText("");
+            setButtonLink("");
+            setLinks([]);
+            setAdditionalImages([]);
             setShowForm(false);
             setEditingId(null);
             mutate();
@@ -152,8 +226,132 @@ export default function UpdatesAdmin() {
                                 </div>
                             </div>
                         </div>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-gray-500 uppercase tracking-widest ml-1">Badge Text</label>
+                                <input
+                                    type="text"
+                                    value={badgeText}
+                                    onChange={(e) => setBadgeText(e.target.value)}
+                                    className="w-full bg-white/[0.03] border border-white/5 rounded-2xl p-4 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/50 transition-all placeholder:text-gray-700"
+                                    placeholder="Update"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-gray-500 uppercase tracking-widest ml-1">Status Text</label>
+                                <input
+                                    type="text"
+                                    value={statusText}
+                                    onChange={(e) => setStatusText(e.target.value)}
+                                    className="w-full bg-white/[0.03] border border-white/5 rounded-2xl p-4 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/50 transition-all placeholder:text-gray-700"
+                                    placeholder="DEADLINE PASSED"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-gray-500 uppercase tracking-widest ml-1">Secondary Title</label>
+                                <input
+                                    type="text"
+                                    value={secondaryTitle}
+                                    onChange={(e) => setSecondaryTitle(e.target.value)}
+                                    className="w-full bg-white/[0.03] border border-white/5 rounded-2xl p-4 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/50 transition-all placeholder:text-gray-700"
+                                    placeholder="BS DEGREE PROGRAM"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-gray-500 uppercase tracking-widest ml-1">Main Button Text</label>
+                                <input
+                                    type="text"
+                                    value={buttonText}
+                                    onChange={(e) => setButtonText(e.target.value)}
+                                    className="w-full bg-white/[0.03] border border-white/5 rounded-2xl p-4 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/50 transition-all placeholder:text-gray-700"
+                                    placeholder="View Details"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-gray-500 uppercase tracking-widest ml-1">Main Button Link (URL)</label>
+                                <input
+                                    type="text"
+                                    value={buttonLink}
+                                    onChange={(e) => setButtonLink(e.target.value)}
+                                    className="w-full bg-white/[0.03] border border-white/5 rounded-2xl p-4 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/50 transition-all placeholder:text-gray-700"
+                                    placeholder="https://example.com"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="space-y-4">
+                            <div className="flex items-center justify-between">
+                                <label className="text-xs font-bold text-gray-500 uppercase tracking-widest ml-1">Additional Links</label>
+                                <button type="button" onClick={addLink} className="text-xs text-blue-500 font-bold flex items-center gap-1 hover:underline">
+                                    <Plus className="w-3 h-3" /> Add Link
+                                </button>
+                            </div>
+                            {links.map((link, index) => (
+                                <div key={index} className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-white/5 p-4 rounded-2xl relative">
+                                    <input
+                                        type="text"
+                                        placeholder="Link Text"
+                                        value={link.text}
+                                        onChange={(e) => updateLink(index, "text", e.target.value)}
+                                        className="bg-transparent border-b border-white/10 p-2 text-white focus:outline-none text-sm"
+                                    />
+                                    <input
+                                        type="text"
+                                        placeholder="URL"
+                                        value={link.url}
+                                        onChange={(e) => updateLink(index, "url", e.target.value)}
+                                        className="bg-transparent border-b border-white/10 p-2 text-white focus:outline-none text-sm"
+                                    />
+                                    <button type="button" onClick={() => removeLink(index)} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-lg">
+                                        <Trash2 className="w-3 h-3" />
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className="space-y-4">
+                            <div className="flex items-center justify-between">
+                                <label className="text-xs font-bold text-gray-500 uppercase tracking-widest ml-1">Additional Images & Descriptions</label>
+                                <button type="button" onClick={addImage} className="text-xs text-blue-500 font-bold flex items-center gap-1 hover:underline">
+                                    <Plus className="w-3 h-3" /> Add Image
+                                </button>
+                            </div>
+                            {additionalImages.map((img, index) => (
+                                <div key={index} className="space-y-4 bg-white/5 p-4 rounded-2xl relative">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <input
+                                                type="file"
+                                                accept="image/*"
+                                                onChange={(e) => {
+                                                    if (e.target.files && e.target.files.length > 0) {
+                                                        updateImageFile(index, e.target.files[0]);
+                                                    }
+                                                }}
+                                                className="text-xs text-gray-500 w-full"
+                                            />
+                                            {img.fileId && <span className="text-[10px] text-blue-500 font-bold uppercase">Existing Image Saved</span>}
+                                        </div>
+                                        <textarea
+                                            placeholder="Image Description"
+                                            value={img.description}
+                                            onChange={(e) => updateImageDescription(index, e.target.value)}
+                                            rows={2}
+                                            className="bg-transparent border border-white/10 p-2 rounded-xl text-white focus:outline-none text-sm resize-none"
+                                        />
+                                    </div>
+                                    <button type="button" onClick={() => removeImage(index)} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-lg">
+                                        <Trash2 className="w-3 h-3" />
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+
                         <div className="space-y-2">
-                            <label className="text-xs font-bold text-gray-500 uppercase tracking-widest ml-1">Content Description</label>
+                            <label className="text-xs font-bold text-gray-500 uppercase tracking-widest ml-1">Main Content Description</label>
                             <textarea
                                 required
                                 rows={5}

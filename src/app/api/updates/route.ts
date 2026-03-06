@@ -38,6 +38,15 @@ export async function POST(req: Request) {
         const description = formData.get('description') as string;
         const file = formData.get('file') as File;
 
+        // New customization fields
+        const badgeText = formData.get('badgeText') as string;
+        const statusText = formData.get('statusText') as string;
+        const secondaryTitle = formData.get('secondaryTitle') as string;
+        const buttonText = formData.get('buttonText') as string;
+        const buttonLink = formData.get('buttonLink') as string;
+        const linksJson = formData.get('links') as string;
+        const additionalImagesJson = formData.get('additionalImages') as string;
+
         if (!title || !description) {
             return NextResponse.json({ success: false, message: 'Please provide title and description' }, { status: 400 });
         }
@@ -57,10 +66,55 @@ export async function POST(req: Request) {
             fileId = savedFile._id;
         }
 
+        // Parse links
+        let links = [];
+        if (linksJson) {
+            try {
+                links = JSON.parse(linksJson);
+            } catch (e) {
+                console.error("Failed to parse links:", e);
+            }
+        }
+
+        // Parse additional images and their descriptions
+        // Note: For now, we assume additionalImagesJson contains an array of { description: string, tempId: string }
+        // and files are sent with keys like `additionalFile_${tempId}`
+        let additionalImages = [];
+        if (additionalImagesJson) {
+            try {
+                const imgData = JSON.parse(additionalImagesJson);
+                for (const item of imgData) {
+                    const imgFile = formData.get(`additionalFile_${item.tempId}`) as File;
+                    if (imgFile && imgFile.size > 0) {
+                        const bytes = await imgFile.arrayBuffer();
+                        const buffer = Buffer.from(bytes);
+                        const savedFile = await FileModel.create({
+                            data: buffer,
+                            contentType: imgFile.type || 'application/octet-stream',
+                            filename: imgFile.name || 'upload',
+                        });
+                        additionalImages.push({
+                            fileId: savedFile._id,
+                            description: item.description
+                        });
+                    }
+                }
+            } catch (e) {
+                console.error("Failed to parse additional images:", e);
+            }
+        }
+
         const newUpdate = await Update.create({
             title,
             description,
             fileId,
+            badgeText,
+            statusText,
+            secondaryTitle,
+            buttonText,
+            buttonLink,
+            links,
+            additionalImages
         });
 
         return NextResponse.json({ success: true, data: newUpdate });
