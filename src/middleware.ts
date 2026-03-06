@@ -13,10 +13,12 @@ export function middleware(request: NextRequest) {
     const isAllowedOrigin = allowedOrigins.includes(origin) || origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:');
 
     // Set origin for CORS - reflect origin if allowed, otherwise fallback to frontendUrl
-    const setOrigin = isAllowedOrigin ? origin : (origin || frontendUrl);
+    const setOrigin = isAllowedOrigin ? origin : frontendUrl;
 
     // Always set CORS headers
-    response.headers.set('Access-Control-Allow-Origin', setOrigin);
+    if (setOrigin) {
+        response.headers.set('Access-Control-Allow-Origin', setOrigin);
+    }
     response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
     response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
     response.headers.set('Access-Control-Allow-Credentials', 'true');

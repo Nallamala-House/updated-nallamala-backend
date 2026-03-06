@@ -10,7 +10,8 @@ import {
     Trash2,
     Calendar,
     Clock,
-    FileText
+    FileText,
+    Pencil
 } from "lucide-react";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
@@ -22,6 +23,24 @@ export default function UpdatesAdmin() {
     const [file, setFile] = useState<File | null>(null);
     const [loading, setLoading] = useState(false);
     const [showForm, setShowForm] = useState(false);
+    const [editingId, setEditingId] = useState<string | null>(null);
+
+    const handleOpenCreateForm = () => {
+        setEditingId(null);
+        setTitle("");
+        setDescription("");
+        setFile(null);
+        setShowForm(!showForm);
+    };
+
+    const handleOpenEditForm = (update: any) => {
+        setEditingId(update._id);
+        setTitle(update.title);
+        setDescription(update.description);
+        setFile(null);
+        setShowForm(true);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -35,19 +54,20 @@ export default function UpdatesAdmin() {
                 formData.append("file", file);
             }
 
-            const res = await fetch("/api/updates", {
-                method: "POST",
+            const res = await fetch(editingId ? `/api/updates/${editingId}` : "/api/updates", {
+                method: editingId ? "PUT" : "POST",
                 body: formData,
             });
 
             const result = await res.json();
             if (!result.success) throw new Error(result.message);
 
-            toast.success("Update published successfully!");
+            toast.success(editingId ? "Update saved successfully!" : "Update published successfully!");
             setTitle("");
             setDescription("");
             setFile(null);
             setShowForm(false);
+            setEditingId(null);
             mutate();
         } catch (err: any) {
             toast.error(err.message || "Something went wrong");
@@ -55,6 +75,23 @@ export default function UpdatesAdmin() {
             setLoading(false);
         }
     };
+
+    const handleDelete = async (id: string) => {
+        if (!confirm("Are you sure you want to delete this update?")) return;
+
+        try {
+            const res = await fetch(`/api/updates/${id}`, {
+                method: "DELETE",
+            });
+            const result = await res.json();
+            if (!result.success) throw new Error(result.message);
+            mutate();
+            toast.success("Update deleted successfully!");
+        } catch (err: any) {
+            toast.error(err.message || "Failed to delete update");
+        }
+    };
+
 
     return (
         <div className="space-y-10">
@@ -64,11 +101,11 @@ export default function UpdatesAdmin() {
                     <p className="text-gray-500 text-sm font-medium">Broadcast news and important announcements to all users.</p>
                 </div>
                 <button
-                    onClick={() => setShowForm(!showForm)}
+                    onClick={handleOpenCreateForm}
                     className="flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-bold transition-all shadow-lg shadow-blue-500/20 active:scale-95"
                 >
-                    {showForm ? <Trash2 className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
-                    {showForm ? "Cancel" : "Post New Update"}
+                    {showForm && !editingId ? <Trash2 className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+                    {showForm && !editingId ? "Cancel" : "Post New Update"}
                 </button>
             </div>
 
@@ -76,7 +113,7 @@ export default function UpdatesAdmin() {
                 <div className="bg-white/[0.03] border border-white/10 rounded-3xl p-8 backdrop-blur-xl animate-in zoom-in-95 duration-300 shadow-2xl shadow-blue-500/5">
                     <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
                         <FileText className="w-5 h-5 text-blue-500" />
-                        Create Announcement
+                        {editingId ? "Edit Announcement" : "Create Announcement"}
                     </h2>
                     <form onSubmit={handleSubmit} className="space-y-6">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -126,14 +163,28 @@ export default function UpdatesAdmin() {
                                 placeholder="Details of the announcement..."
                             />
                         </div>
-                        <div className="flex justify-end">
+                        <div className="flex justify-end gap-4">
+                            {editingId && (
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setShowForm(false);
+                                        setEditingId(null);
+                                        setTitle("");
+                                        setDescription("");
+                                    }}
+                                    className="px-8 py-4 bg-white/10 text-white rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-white/20 transition-all flex items-center gap-2"
+                                >
+                                    Cancel
+                                </button>
+                            )}
                             <button
                                 type="submit"
                                 disabled={loading}
                                 className="px-8 py-4 bg-blue-600 text-white rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-blue-700 disabled:opacity-50 transition-all flex items-center gap-2 shadow-xl shadow-blue-500/20"
                             >
                                 {loading && <Loader2 className="w-4 h-4 animate-spin" />}
-                                {loading ? "Publishing..." : "Publish Broadcast"}
+                                {loading ? (editingId ? "Saving..." : "Publishing...") : (editingId ? "Save Changes" : "Publish Broadcast")}
                             </button>
                         </div>
                     </form>
@@ -191,8 +242,17 @@ export default function UpdatesAdmin() {
                                     <h3 className="text-xl font-bold text-white mb-4 group-hover:text-blue-400 transition-colors">{update.title}</h3>
                                     <p className="text-gray-400 text-sm leading-relaxed line-clamp-3 whitespace-pre-wrap">{update.description}</p>
                                 </div>
-                                <div className="absolute top-6 right-6 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <button className="p-3 bg-red-500/10 text-red-500 rounded-xl hover:bg-red-500/20 transition-all">
+                                <div className="absolute top-6 right-6 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
+                                    <button
+                                        onClick={() => handleOpenEditForm(update)}
+                                        className="p-3 bg-blue-500/10 text-blue-500 rounded-xl hover:bg-blue-500/20 transition-all"
+                                    >
+                                        <Pencil className="w-4 h-4" />
+                                    </button>
+                                    <button
+                                        onClick={() => handleDelete(update._id)}
+                                        className="p-3 bg-red-500/10 text-red-500 rounded-xl hover:bg-red-500/20 transition-all"
+                                    >
                                         <Trash2 className="w-4 h-4" />
                                     </button>
                                 </div>

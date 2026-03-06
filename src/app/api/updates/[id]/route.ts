@@ -3,30 +3,38 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/authOptions';
 import connectMongo from '@/lib/mongoose';
 import Update from '@/models/Update';
-
 import FileModel from '@/models/File';
 
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
-
-export async function GET() {
+export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
     try {
+        const session = await getServerSession(authOptions);
+        if (!session || session.user.role !== 'admin') {
+            return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 403 });
+        }
+
         await connectMongo();
-        const updates = await Update.find({}).populate('fileId').sort({ createdAt: -1 });
-        return NextResponse.json(
-            { success: true, count: updates.length, data: updates },
-            {
-                headers: {
-                    'Cache-Control': 'no-store, max-age=0',
-                },
-            }
-        );
+
+        const { id } = await params;
+        const updateId = id;
+        const update = await Update.findById(updateId);
+
+        if (!update) {
+            return NextResponse.json({ success: false, message: 'Update not found' }, { status: 404 });
+        }
+
+        if (update.fileId) {
+            await FileModel.findByIdAndDelete(update.fileId);
+        }
+
+        await Update.findByIdAndDelete(updateId);
+
+        return NextResponse.json({ success: true, message: 'Update deleted successfully' });
     } catch (error: any) {
         return NextResponse.json({ success: false, message: error.message }, { status: 500 });
     }
 }
 
-export async function POST(req: Request) {
+export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
     try {
         const session = await getServerSession(authOptions);
         if (!session || session.user.role !== 'admin') {
@@ -44,8 +52,19 @@ export async function POST(req: Request) {
 
         await connectMongo();
 
-        let fileId: any = undefined;
+        const { id } = await params;
+        const updateId = id;
+        const existingUpdate = await Update.findById(updateId);
+
+        if (!existingUpdate) {
+            return NextResponse.json({ success: false, message: 'Update not found' }, { status: 404 });
+        }
+
+        let fileId: any = existingUpdate.fileId;
         if (file && file.size > 0) {
+            if (fileId) {
+                await FileModel.findByIdAndDelete(fileId);
+            }
             const bytes = await file.arrayBuffer();
             const buffer = Buffer.from(bytes);
 
@@ -57,15 +76,14 @@ export async function POST(req: Request) {
             fileId = savedFile._id;
         }
 
-        const newUpdate = await Update.create({
-            title,
-            description,
-            fileId,
-        });
+        const updatedUpdate = await Update.findByIdAndUpdate(
+            updateId,
+            { title, description, fileId },
+            { new: true }
+        );
 
-        return NextResponse.json({ success: true, data: newUpdate });
+        return NextResponse.json({ success: true, data: updatedUpdate });
     } catch (error: any) {
         return NextResponse.json({ success: false, message: error.message }, { status: 500 });
     }
 }
-

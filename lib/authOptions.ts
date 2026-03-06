@@ -18,16 +18,17 @@ export const authOptions: AuthOptions = {
 
                     const email = user?.email || "";
                     const existingUser = await User.findOne({ email: email });
-                    const adminEmail = "nallamala-webad@ds.study.iitm.ac.in";
+                    const adminEmails = ["nallamala-webad@ds.study.iitm.ac.in", "nallamala-webad@ds.study.ac.in"];
+                    const isAdmin = adminEmails.includes(email);
 
                     if (!existingUser && user) {
                         await User.create({
                             name: user.name || "User",
                             email: email,
                             image: user.image || "",
-                            role: email === adminEmail ? 'admin' : 'user', // Grant admin to specific email
+                            role: isAdmin ? 'admin' : 'user', // Grant admin to specific emails
                         });
-                    } else if (existingUser && email === adminEmail && existingUser.role !== 'admin') {
+                    } else if (existingUser && isAdmin && existingUser.role !== 'admin') {
                         // Ensure the specific email has admin role even if user existed previously
                         existingUser.role = 'admin';
                         await existingUser.save();
