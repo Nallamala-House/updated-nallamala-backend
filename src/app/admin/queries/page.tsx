@@ -110,8 +110,8 @@ export default function QueriesAdmin() {
                                                 {new Date(query.createdAt).toLocaleDateString()}
                                             </div>
                                             <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${query.status === 'answered'
-                                                    ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20'
-                                                    : 'bg-amber-500/10 text-amber-500 border border-amber-500/20'
+                                                ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20'
+                                                : 'bg-amber-500/10 text-amber-500 border border-amber-500/20'
                                                 }`}>
                                                 {query.status === 'answered' ? <CheckCircle2 className="w-3 h-3" /> : <HelpCircle className="w-3 h-3" />}
                                                 {query.status}
@@ -119,62 +119,77 @@ export default function QueriesAdmin() {
                                         </div>
                                     </div>
 
-                                    <div className="flex-1 space-y-6">
-                                        <div className="bg-white/[0.02] border border-white/5 p-6 rounded-2xl">
-                                            <p className="text-xs font-black text-blue-500 uppercase tracking-widest mb-3">Question</p>
-                                            <p className="text-gray-200 leading-relaxed font-medium capitalize">
-                                                {query.question}
-                                            </p>
+                                    <div className="flex-1 space-y-4">
+                                        {/* Render Chat History */}
+                                        <div className="space-y-4 max-h-96 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
+                                            {query.messages && query.messages.map((msg: any, index: number) => (
+                                                <div key={index} className={`flex flex-col ${msg.sender === 'user' ? 'items-start' : 'items-end'}`}>
+                                                    <div className={`p-4 rounded-2xl max-w-[90%] ${msg.sender === 'user'
+                                                        ? 'bg-white/[0.02] border border-white/5 rounded-tl-sm'
+                                                        : 'bg-emerald-500/5 border border-emerald-500/10 rounded-tr-sm'
+                                                        }`}>
+                                                        {msg.sender === 'admin' && (
+                                                            <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest mb-2 flex items-center gap-2">
+                                                                <CheckCircle2 className="w-3 h-3" />
+                                                                Official Response
+                                                            </p>
+                                                        )}
+                                                        {msg.sender === 'user' && (
+                                                            <p className="text-[10px] font-black text-blue-500 uppercase tracking-widest mb-2">
+                                                                Question
+                                                            </p>
+                                                        )}
+                                                        <p className={`text-sm leading-relaxed ${msg.sender === 'user' ? 'text-gray-200 capitalize font-medium' : 'text-gray-300 italic'}`}>
+                                                            {msg.sender === 'admin' ? `"${msg.text}"` : msg.text}
+                                                        </p>
+                                                        <div className={`text-[10px] text-gray-500 mt-2 font-medium flex items-center gap-1 ${msg.sender === 'admin' ? 'justify-end' : ''}`}>
+                                                            <Clock className="w-2.5 h-2.5" />
+                                                            {new Date(msg.timestamp).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
                                         </div>
 
-                                        {query.status === 'answered' ? (
-                                            <div className="bg-emerald-500/5 border border-emerald-500/10 p-6 rounded-2xl relative">
-                                                <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest mb-3 flex items-center gap-2">
-                                                    <CheckCircle2 className="w-3 h-3" />
-                                                    Official Response
-                                                </p>
-                                                <p className="text-gray-300 text-sm leading-relaxed italic">
-                                                    "{query.answer}"
-                                                </p>
-                                            </div>
-                                        ) : (
+                                        {/* Reply Area */}
+                                        <div className="pt-4 border-t border-white/5 mt-4">
                                             <div className="space-y-4">
                                                 {answeringId === query._id ? (
                                                     <div className="animate-in slide-in-from-top-4 duration-300">
                                                         <textarea
-                                                            rows={4}
+                                                            rows={3}
                                                             value={answerText}
                                                             onChange={(e) => setAnswerText(e.target.value)}
-                                                            className="w-full bg-white/[0.02] border border-white/10 rounded-2xl p-6 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/50 transition-all placeholder:text-gray-700 resize-none shadow-inner"
-                                                            placeholder="Compose your helpful response here..."
+                                                            className="w-full bg-white/[0.02] border border-white/10 rounded-2xl p-5 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/50 transition-all placeholder:text-gray-700 resize-none shadow-inner"
+                                                            placeholder="Type your response to continue the thread..."
                                                         />
-                                                        <div className="flex justify-end gap-3 mt-4">
+                                                        <div className="flex justify-end gap-3 mt-3">
                                                             <button
                                                                 onClick={() => { setAnsweringId(null); setAnswerText(""); }}
-                                                                className="px-6 py-3 text-gray-500 hover:text-white text-xs font-bold uppercase tracking-widest transition-colors"
+                                                                className="px-5 py-2 text-gray-500 hover:text-white text-xs font-bold uppercase tracking-widest transition-colors"
                                                             >
                                                                 Discard
                                                             </button>
                                                             <button
                                                                 onClick={() => handleAnswerSubmit(query._id)}
                                                                 disabled={loading}
-                                                                className="flex items-center gap-2 px-8 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-lg shadow-emerald-500/20 disabled:opacity-50"
+                                                                className="flex items-center gap-2 px-6 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-lg shadow-emerald-500/20 disabled:opacity-50"
                                                             >
                                                                 {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                                                                {loading ? "Sending..." : "Post Response"}
+                                                                {loading ? "Sending..." : "Reply to Thread"}
                                                             </button>
                                                         </div>
                                                     </div>
                                                 ) : (
                                                     <button
                                                         onClick={() => { setAnsweringId(query._id); setAnswerText(""); }}
-                                                        className="w-full py-4 bg-blue-600/10 hover:bg-blue-600/20 text-blue-500 border border-blue-500/20 rounded-2xl text-xs font-black uppercase tracking-widest transition-all active:scale-[0.99]"
+                                                        className="w-full py-3 bg-blue-600/10 hover:bg-blue-600/20 text-blue-500 border border-blue-500/20 rounded-xl text-xs font-black uppercase tracking-widest transition-all active:scale-[0.99]"
                                                     >
-                                                        Draft Response
+                                                        Continue Thread
                                                     </button>
                                                 )}
                                             </div>
-                                        )}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
