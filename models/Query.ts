@@ -1,15 +1,26 @@
 import mongoose, { Document, Model, Schema, Types } from 'mongoose';
 
+export interface IMessage {
+    text: string;
+    sender: 'user' | 'admin';
+    timestamp: Date;
+}
+
 export interface IQuery extends Document {
     userId: Types.ObjectId;
     userName: string;
     userEmail: string;
-    question: string;
-    answer?: string;
+    messages: IMessage[];
     status: 'pending' | 'answered';
     createdAt: Date;
     updatedAt: Date;
 }
+
+const messageSchema = new Schema<IMessage>({
+    text: { type: String, required: true },
+    sender: { type: String, enum: ['user', 'admin'], required: true },
+    timestamp: { type: Date, default: Date.now }
+});
 
 const querySchema: Schema<IQuery> = new mongoose.Schema({
     userId: {
@@ -24,14 +35,7 @@ const querySchema: Schema<IQuery> = new mongoose.Schema({
         type: String,
         required: true,
     },
-    question: {
-        type: String,
-        required: true,
-    },
-    answer: {
-        type: String,
-        default: null,
-    },
+    messages: [messageSchema],
     status: {
         type: String,
         enum: ['pending', 'answered'],
