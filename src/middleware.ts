@@ -20,7 +20,7 @@ export function middleware(request: NextRequest) {
         response.headers.set('Access-Control-Allow-Origin', setOrigin);
     }
     response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
-    response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-User-Email, X-User-Name, X-User-Role, X-User-Id, X-Internal-Secret');
     response.headers.set('Access-Control-Allow-Credentials', 'true');
 
     // Handle OPTIONS preflight

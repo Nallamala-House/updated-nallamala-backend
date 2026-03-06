@@ -4,17 +4,48 @@ import { authOptions } from '@/lib/authOptions';
 import connectMongo from '@/lib/mongoose';
 import Query from '@/models/Query';
 
+// Helper: Get caller info from session OR trusted proxy headers
+async function getCallerInfo(req: NextRequest) {
+    // Try session first (works for same-origin / admin panel)
+    const session = await getServerSession(authOptions);
+    if (session?.user?.email) {
+        return {
+            email: session.user.email,
+            name: session.user.name || "Unknown User",
+            role: session.user.role || "user",
+            id: session.user.id || "",
+        };
+    }
+
+    // Fall back to trusted proxy headers (from frontend proxy route)
+    const secret = req.headers.get('x-internal-secret');
+    const expectedSecret = process.env.INTERNAL_API_SECRET;
+    if (expectedSecret && secret === expectedSecret) {
+        const email = req.headers.get('x-user-email');
+        if (email) {
+            return {
+                email,
+                name: req.headers.get('x-user-name') || "Unknown User",
+                role: req.headers.get('x-user-role') || "user",
+                id: req.headers.get('x-user-id') || "",
+            };
+        }
+    }
+
+    return null;
+}
+
 // GET all queries (Admin) or User specific (Public)
 export async function GET(req: NextRequest) {
     try {
         await connectMongo();
-        const session = await getServerSession(authOptions);
+        const caller = await getCallerInfo(req);
 
         let queries: any[] = [];
-        if (session?.user?.role === 'admin') {
+        if (caller?.role === 'admin') {
             queries = await Query.find({}).sort({ updatedAt: -1 });
-        } else if (session?.user?.email) {
-            queries = await Query.find({ userEmail: session.user.email }).sort({ updatedAt: -1 });
+        } else if (caller?.email) {
+            queries = await Query.find({ userEmail: caller.email }).sort({ updatedAt: -1 });
         }
 
         return NextResponse.json({ success: true, count: queries.length, data: queries });
@@ -26,8 +57,8 @@ export async function GET(req: NextRequest) {
 // POST a new query message (User endpoint)
 export async function POST(req: NextRequest) {
     try {
-        const session = await getServerSession(authOptions);
-        if (!session?.user?.email) {
+        const caller = await getCallerInfo(req);
+        if (!caller?.email) {
             return NextResponse.json({ success: false, message: 'You must be logged in to ask a question' }, { status: 401 });
         }
 
@@ -40,7 +71,7 @@ export async function POST(req: NextRequest) {
         await connectMongo();
 
         // Check if a query thread already exists for this user email
-        let query = await Query.findOne({ userEmail: session.user.email });
+        let query = await Query.findOne({ userEmail: caller.email });
 
         const newMessage = {
             text: question,
@@ -56,9 +87,9 @@ export async function POST(req: NextRequest) {
         } else {
             // Create a brand new thread
             query = await Query.create({
-                userId: session.user.id,
-                userName: session.user.name || "Unknown User",
-                userEmail: session.user.email,
+                userId: caller.id,
+                userName: caller.name,
+                userEmail: caller.email,
                 messages: [newMessage],
                 status: 'pending',
             });
@@ -73,8 +104,8 @@ export async function POST(req: NextRequest) {
 // PATCH an answer (Admin responding to a query thread)
 export async function PATCH(req: NextRequest) {
     try {
-        const session = await getServerSession(authOptions);
-        if (!session || session.user.role !== 'admin') {
+        const caller = await getCallerInfo(req);
+        if (!caller || caller.role !== 'admin') {
             return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 403 });
         }
 
