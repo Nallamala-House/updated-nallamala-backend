@@ -31,6 +31,24 @@ export default function ResourcesAdmin() {
     const [showForm, setShowForm] = useState(false);
     const [searchTerm, setSearchTerm] = useState("");
 
+    // Section specific states
+    const [section, setSection] = useState("documents");
+    
+    // Notes fields
+    const [stream, setStream] = useState("Data Science");
+    const [level, setLevel] = useState("Foundation");
+    const [subject, setSubject] = useState("");
+    const [resourceType, setResourceType] = useState("notes");
+    
+    // PYQs fields
+    const [streamLevel, setStreamLevel] = useState("Data Science - Foundation");
+    const [year, setYear] = useState("All Years");
+    const [term, setTerm] = useState("All Terms");
+    const [examType, setExamType] = useState("All Exams");
+    
+    // Documents fields
+    const [subCategory, setSubCategory] = useState("academic");
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
@@ -40,6 +58,22 @@ export default function ResourcesAdmin() {
             formData.append("title", title);
             formData.append("type", type);
             formData.append("description", description);
+            formData.append("section", section);
+
+            if (section === "notes") {
+                formData.append("stream", stream);
+                formData.append("level", level);
+                formData.append("subject", subject);
+                formData.append("resourceType", resourceType);
+            } else if (section === "pyqs") {
+                formData.append("streamLevel", streamLevel);
+                formData.append("year", year);
+                formData.append("term", term);
+                formData.append("examType", examType);
+                formData.append("subject", subject);
+            } else if (section === "documents") {
+                formData.append("subCategory", subCategory);
+            }
 
             if (type === "link") {
                 if (!urlInput) throw new Error("URL is required for links.");
@@ -66,6 +100,16 @@ export default function ResourcesAdmin() {
             setType("link");
             setFile(null);
             setUrlInput("");
+            setSection("documents");
+            setSubject("");
+            setStream("Data Science");
+            setLevel("Foundation");
+            setResourceType("notes");
+            setStreamLevel("Data Science - Foundation");
+            setYear("All Years");
+            setTerm("All Terms");
+            setExamType("All Exams");
+            setSubCategory("academic");
             setShowForm(false);
             mutate();
         } catch (err: any) {
@@ -117,7 +161,7 @@ export default function ResourcesAdmin() {
                         Upload Resource
                     </h2>
                     <form onSubmit={handleSubmit} className="space-y-6">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                             <div className="space-y-2">
                                 <label className="text-xs font-bold text-gray-500 uppercase tracking-widest ml-1">Title</label>
                                 <input
@@ -145,7 +189,162 @@ export default function ResourcesAdmin() {
                                     <option value="video" className="bg-[#111]">Video Recording</option>
                                 </select>
                             </div>
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-gray-500 uppercase tracking-widest ml-1">Section</label>
+                                <select
+                                    value={section}
+                                    onChange={(e) => setSection(e.target.value)}
+                                    className="w-full bg-white/[0.03] border border-white/5 rounded-2xl p-4 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all appearance-none cursor-pointer"
+                                >
+                                    <option value="documents" className="bg-[#111]">Documents (Official)</option>
+                                    <option value="notes" className="bg-[#111]">Notes / Books</option>
+                                    <option value="pyqs" className="bg-[#111]">PYQs (Exam Papers)</option>
+                                </select>
+                            </div>
                         </div>
+
+                        {/* Notes Conditional Fields */}
+                        {section === "notes" && (
+                            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 animate-in fade-in duration-300">
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold text-gray-500 uppercase tracking-widest ml-1">Stream</label>
+                                    <select
+                                        value={stream}
+                                        onChange={(e) => setStream(e.target.value)}
+                                        className="w-full bg-white/[0.03] border border-white/5 rounded-2xl p-4 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all appearance-none"
+                                    >
+                                        <option value="Data Science" className="bg-[#111]">Data Science</option>
+                                        <option value="Electronics" className="bg-[#111]">Electronics</option>
+                                    </select>
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold text-gray-500 uppercase tracking-widest ml-1">Level</label>
+                                    <select
+                                        value={level}
+                                        onChange={(e) => setLevel(e.target.value)}
+                                        className="w-full bg-white/[0.03] border border-white/5 rounded-2xl p-4 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all appearance-none"
+                                    >
+                                        <option value="Foundation" className="bg-[#111]">Foundation</option>
+                                        <option value="Diploma" className="bg-[#111]">Diploma</option>
+                                        <option value="Degree" className="bg-[#111]">Degree</option>
+                                    </select>
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold text-gray-500 uppercase tracking-widest ml-1">Resource Type</label>
+                                    <select
+                                        value={resourceType}
+                                        onChange={(e) => setResourceType(e.target.value)}
+                                        className="w-full bg-white/[0.03] border border-white/5 rounded-2xl p-4 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all appearance-none"
+                                    >
+                                        <option value="notes" className="bg-[#111]">Notes</option>
+                                        <option value="books" className="bg-[#111]">Books</option>
+                                    </select>
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold text-gray-500 uppercase tracking-widest ml-1">Subject / Course</label>
+                                    <input
+                                        type="text"
+                                        required
+                                        value={subject}
+                                        onChange={(e) => setSubject(e.target.value)}
+                                        className="w-full bg-white/[0.03] border border-white/5 rounded-2xl p-4 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all placeholder:text-gray-700"
+                                        placeholder="E.g., Python Programming"
+                                    />
+                                </div>
+                            </div>
+                        )}
+
+                        {/* PYQs Conditional Fields */}
+                        {section === "pyqs" && (
+                            <div className="grid grid-cols-1 md:grid-cols-5 gap-4 animate-in fade-in duration-300">
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold text-gray-500 uppercase tracking-widest ml-1">Program</label>
+                                    <select
+                                        value={streamLevel}
+                                        onChange={(e) => setStreamLevel(e.target.value)}
+                                        className="w-full bg-white/[0.03] border border-white/5 rounded-2xl p-4 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all appearance-none"
+                                    >
+                                        <option value="Data Science - Foundation" className="bg-[#111]">Data Science - Foundation</option>
+                                        <option value="Data Science - Diploma" className="bg-[#111]">Data Science - Diploma</option>
+                                        <option value="Data Science - Degree" className="bg-[#111]">Data Science - Degree</option>
+                                        <option value="Electronics - Degree" className="bg-[#111]">Electronics - Degree</option>
+                                    </select>
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold text-gray-500 uppercase tracking-widest ml-1">Year</label>
+                                    <select
+                                        value={year}
+                                        onChange={(e) => setYear(e.target.value)}
+                                        className="w-full bg-white/[0.03] border border-white/5 rounded-2xl p-4 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all appearance-none"
+                                    >
+                                        <option value="All Years" className="bg-[#111]">All Years</option>
+                                        <option value="2026" className="bg-[#111]">2026</option>
+                                        <option value="2025" className="bg-[#111]">2025</option>
+                                        <option value="2024" className="bg-[#111]">2024</option>
+                                        <option value="2023" className="bg-[#111]">2023</option>
+                                    </select>
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold text-gray-500 uppercase tracking-widest ml-1">Term</label>
+                                    <select
+                                        value={term}
+                                        onChange={(e) => setTerm(e.target.value)}
+                                        className="w-full bg-white/[0.03] border border-white/5 rounded-2xl p-4 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all appearance-none"
+                                    >
+                                        <option value="All Terms" className="bg-[#111]">All Terms</option>
+                                        <option value="Term 1" className="bg-[#111]">Term 1</option>
+                                        <option value="Term 2" className="bg-[#111]">Term 2</option>
+                                        <option value="Term 3" className="bg-[#111]">Term 3</option>
+                                    </select>
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold text-gray-500 uppercase tracking-widest ml-1">Exam Type</label>
+                                    <select
+                                        value={examType}
+                                        onChange={(e) => setExamType(e.target.value)}
+                                        className="w-full bg-white/[0.03] border border-white/5 rounded-2xl p-4 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all appearance-none"
+                                    >
+                                        <option value="All Exams" className="bg-[#111]">All Exams</option>
+                                        <option value="Quiz 1" className="bg-[#111]">Quiz 1</option>
+                                        <option value="Quiz 2" className="bg-[#111]">Quiz 2</option>
+                                        <option value="End Term" className="bg-[#111]">End Term</option>
+                                    </select>
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold text-gray-500 uppercase tracking-widest ml-1">Subject</label>
+                                    <input
+                                        type="text"
+                                        required
+                                        value={subject}
+                                        onChange={(e) => setSubject(e.target.value)}
+                                        className="w-full bg-white/[0.03] border border-white/5 rounded-2xl p-4 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all placeholder:text-gray-700"
+                                        placeholder="E.g., Mathematics 1"
+                                    />
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Documents Conditional Fields */}
+                        {section === "documents" && (
+                            <div className="grid grid-cols-1 gap-6 animate-in fade-in duration-300">
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold text-gray-500 uppercase tracking-widest ml-1">Sub-category</label>
+                                    <select
+                                        value={subCategory}
+                                        onChange={(e) => setSubCategory(e.target.value)}
+                                        className="w-full bg-white/[0.03] border border-white/5 rounded-2xl p-4 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all appearance-none"
+                                    >
+                                        <option value="academic" className="bg-[#111]">Academic Documents</option>
+                                        <option value="policies" className="bg-[#111]">House Policies</option>
+                                        <option value="programs" className="bg-[#111]">Program Details</option>
+                                        <option value="transfers" className="bg-[#111]">Credit Transfers</option>
+                                        <option value="opportunities" className="bg-[#111]">Opportunities / TAships</option>
+                                        <option value="resources" className="bg-[#111]">General Resources</option>
+                                        <option value="latest uploads" className="bg-[#111]">Latest Uploads</option>
+                                    </select>
+                                </div>
+                            </div>
+                        )}
 
                         <div className="grid grid-cols-1 gap-6">
                             {type === "link" ? (
@@ -268,6 +467,38 @@ export default function ResourcesAdmin() {
                                         </button>
                                     </div>
                                     <h3 className="text-white font-bold mb-2 group-hover:text-blue-400 transition-colors line-clamp-1">{resource.title}</h3>
+                                    
+                                    <div className="flex flex-wrap gap-1.5 mt-2 mb-4">
+                                        <span className="text-[9px] font-black uppercase tracking-widest bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded border border-blue-500/20">
+                                            {resource.section || "documents"}
+                                        </span>
+                                        {resource.section === "notes" && (
+                                            <>
+                                                <span className="text-[9px] font-black uppercase tracking-widest bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded border border-emerald-500/20">
+                                                    {resource.stream} • {resource.level}
+                                                </span>
+                                                <span className="text-[9px] font-black uppercase tracking-widest bg-yellow-500/10 text-yellow-400 px-2 py-0.5 rounded border border-yellow-500/20">
+                                                    {resource.subject}
+                                                </span>
+                                            </>
+                                        )}
+                                        {resource.section === "pyqs" && (
+                                            <>
+                                                <span className="text-[9px] font-black uppercase tracking-widest bg-rose-500/10 text-rose-400 px-2 py-0.5 rounded border border-rose-500/20">
+                                                    {resource.streamLevel}
+                                                </span>
+                                                <span className="text-[9px] font-black uppercase tracking-widest bg-purple-500/10 text-purple-400 px-2 py-0.5 rounded border border-purple-500/20">
+                                                    {resource.year} • {resource.term} • {resource.examType}
+                                                </span>
+                                            </>
+                                        )}
+                                        {resource.section === "documents" && resource.subCategory && (
+                                            <span className="text-[9px] font-black uppercase tracking-widest bg-gray-500/10 text-gray-400 px-2 py-0.5 rounded border border-gray-500/20">
+                                                {resource.subCategory}
+                                            </span>
+                                        )}
+                                    </div>
+
                                     <p className="text-gray-500 text-xs leading-relaxed line-clamp-2 mb-6">
                                         {resource.description || "No description provided."}
                                     </p>

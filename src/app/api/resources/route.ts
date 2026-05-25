@@ -9,7 +9,7 @@ import FileModel from '@/models/File';
 export async function GET() {
     try {
         await connectMongo();
-        const resources = await Resource.find({}).populate('fileId').sort({ createdAt: -1 });
+        const resources = await Resource.find({}).populate('fileId', '-data').sort({ createdAt: -1 });
         return NextResponse.json({ success: true, count: resources.length, data: resources });
     } catch (error: any) {
         return NextResponse.json({ success: false, message: error.message }, { status: 500 });
@@ -55,6 +55,16 @@ export async function POST(req: Request) {
             url: url || undefined,
             fileId,
             description,
+            section: (formData.get('section') as any) || 'documents',
+            stream: formData.get('stream') as string || undefined,
+            level: formData.get('level') as string || undefined,
+            subject: formData.get('subject') as string || undefined,
+            resourceType: formData.get('resourceType') as string || undefined,
+            streamLevel: formData.get('streamLevel') as string || undefined,
+            year: formData.get('year') as string || undefined,
+            term: formData.get('term') as string || undefined,
+            examType: formData.get('examType') as string || undefined,
+            subCategory: formData.get('subCategory') as string || undefined,
         });
 
         return NextResponse.json({ success: true, data: newResource });

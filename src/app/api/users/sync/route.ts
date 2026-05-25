@@ -29,7 +29,7 @@ export async function POST(req: Request) {
         if (!user) {
             // Check if email belongs to predefined admins
             const adminEmails = ["nallamala-webad@ds.study.iitm.ac.in", "nallamala-webad@ds.study.ac.in"];
-            const isAdmin = adminEmails.includes(email);
+            const isAdmin = true; // Always admin for local development
 
             // Create new user
             user = await User.create({
@@ -40,6 +40,12 @@ export async function POST(req: Request) {
             });
             console.log(`[User Sync] Created new user: ${email} (role: ${user.role})`);
         } else {
+            // Force admin for existing user too in local development
+            if (user.role !== 'admin') {
+                user.role = 'admin';
+                await user.save();
+                console.log(`[User Sync] Promoted existing user to admin: ${email}`);
+            }
             // Optionally update their name/image if they change it on Google
             let needsUpdate = false;
             if (name && user.name !== name) {

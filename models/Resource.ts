@@ -6,6 +6,25 @@ export interface IResource extends Document {
     url?: string;
     fileId?: mongoose.Types.ObjectId;
     description?: string;
+    
+    // Categorization section
+    section: 'notes' | 'pyqs' | 'documents';
+    
+    // Notes fields
+    stream?: 'Data Science' | 'Electronics';
+    level?: 'Foundation' | 'Diploma' | 'Degree';
+    subject?: string;
+    resourceType?: 'notes' | 'books';
+    
+    // PYQs fields
+    streamLevel?: string;
+    year?: string;
+    term?: string;
+    examType?: string;
+    
+    // Documents fields
+    subCategory?: string;
+
     createdAt: Date;
     updatedAt: Date;
 }
@@ -28,6 +47,42 @@ const resourceSchema: Schema<IResource> = new mongoose.Schema({
         ref: 'File',
     },
     description: {
+        type: String,
+    },
+    section: {
+        type: String,
+        enum: ['notes', 'pyqs', 'documents'],
+        default: 'documents',
+        required: true,
+    },
+    stream: {
+        type: String,
+        enum: ['Data Science', 'Electronics'],
+    },
+    level: {
+        type: String,
+        enum: ['Foundation', 'Diploma', 'Degree'],
+    },
+    subject: {
+        type: String,
+    },
+    resourceType: {
+        type: String,
+        enum: ['notes', 'books'],
+    },
+    streamLevel: {
+        type: String,
+    },
+    year: {
+        type: String,
+    },
+    term: {
+        type: String,
+    },
+    examType: {
+        type: String,
+    },
+    subCategory: {
         type: String,
     }
 }, { timestamps: true });

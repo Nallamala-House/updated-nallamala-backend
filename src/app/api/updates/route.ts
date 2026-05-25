@@ -12,7 +12,7 @@ export const revalidate = 0;
 export async function GET() {
     try {
         await connectMongo();
-        const updates = await Update.find({}).populate('fileId').sort({ createdAt: -1 });
+        const updates = await Update.find({}).populate('fileId', '-data').sort({ createdAt: -1 });
         return NextResponse.json(
             { success: true, count: updates.length, data: updates },
             {
