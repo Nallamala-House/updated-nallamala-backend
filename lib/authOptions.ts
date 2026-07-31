@@ -19,7 +19,7 @@ export const authOptions: AuthOptions = {
                     const email = user?.email || "";
                     const existingUser = await User.findOne({ email: email });
                     const adminEmails = ["nallamala-webad@ds.study.iitm.ac.in", "nallamala-sec@ds.study.iitm.ac.in"];
-                    const isAdmin = true; // For local development, grant admin role to any signed-in user
+                    const isAdmin = adminEmails.includes(email);
 
                     if (!existingUser && user) {
                         await User.create({
