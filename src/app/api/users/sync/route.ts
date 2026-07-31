@@ -23,14 +23,14 @@ export async function POST(req: Request) {
 
         await connectMongo();
 
+        // Check if email belongs to predefined admins
+        const adminEmails = ["nallamala-webad@ds.study.iitm.ac.in", "nallamala-webad@ds.study.ac.in"];
+        const isAdmin = adminEmails.includes(email);
+
         // Check if user already exists
         let user = await User.findOne({ email });
 
         if (!user) {
-            // Check if email belongs to predefined admins
-            const adminEmails = ["nallamala-webad@ds.study.iitm.ac.in", "nallamala-webad@ds.study.ac.in"];
-            const isAdmin = adminEmails.includes(email);
-
             // Create new user
             user = await User.create({
                 name: name || "User",
